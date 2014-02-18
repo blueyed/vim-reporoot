@@ -12,13 +12,13 @@ let g:reporoot_loaded = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! s:RepoRoot(force, ...) "{{{1
+function! s:RepoRoot(force, cdcmd, ...) "{{{1
     let dirbak = a:0 == 0 ? getcwd() : a:1
     if a:force
         let dirbak = fnamemodify(dirbak, ':h')
     endif
     let dir = GetRepoRoot(dirbak)
-    execute 'cd '.dir
+    execute a:cdcmd.' '.dir
 endfunction
 
 function! s:GetFullPath(path) "{{{1
@@ -26,7 +26,11 @@ function! s:GetFullPath(path) "{{{1
 endfunction
 
 function! IsRepo(dir) "{{{1
-    for type in ['svn', 'git', 'hg', 'bzr']
+    if isdirectory(a:dir.'/.git') || filereadable(a:dir.'/.git')
+        " .git might be a directory or file containing a path to a gitdir.
+        return 1
+    endif
+    for type in ['svn', 'hg', 'bzr']
         if isdirectory(a:dir.'/.'.type)
             return 1
         endif
@@ -80,6 +84,7 @@ endfunction
 
 "}}}1
 
-command! -nargs=? -bang RepoRoot call s:RepoRoot(strlen('<bang>'), <f-args>)
+command! -nargs=? -bang RepoRoot      call s:RepoRoot(strlen('<bang>'), 'cd', <f-args>)
+command! -nargs=? -bang RepoRootLocal call s:RepoRoot(strlen('<bang>'), 'lcd', <f-args>)
 
 let &cpo = s:save_cpo
